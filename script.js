@@ -1,48 +1,122 @@
 
-var row=1;
-var submit=document.getElementById("submit");
-submit.addEventListener("click", displayDetails);
+let form = document.getElementById("form");
 
+const retriveEntries = () => {
+  let entries = localStorage.getItem("userEntry");
 
+  if (entries) {
+    entries = JSON.parse(entries);
+  } else {
+    entries = [];
+  }
+  return entries;
+};
 
-function displayDetails(){
-    var name = document.getElementById("name").value;
-    var email = document.getElementById("email").value;
-    var password = document.getElementById("password").value;
-    var dob = document.getElementById("dob").value;
-    var tc = document.getElementById("tc").checked;
-    var age = Age(dob);
-    if (age < 18 || age > 55) {
-        alert("Not eligible as age is not between 18 and 55");
-        return false;
-    }
+let Entries = retriveEntries();
 
-    function Age(dob) {
-        var pday = new Date();
-        var bday = new Date(dob);
-        var age = pday.getFullYear() - bday.getFullYear();
-        var m = pday.getMonth() - bday.getMonth();
-        if (m < 0 || (m === 0 && pday.getDate() < bday.getDate())) {
-            age--;
-          }
-        return age;
-    }
-    
+const displayEntries = () => {
+  const entries = retriveEntries();
 
-    var userdata = document.getElementById("userdata");
-    var newRow= userdata.insertRow(row);
-    var cell1=newRow.insertCell(0);
-    var cell2=newRow.insertCell(1);
-    var cell3=newRow.insertCell(2);
-    var cell4=newRow.insertCell(3);
-    var cell5=newRow.insertCell(4);
+  const rows = entries
+    .map((entry) => {
+      const name = `<td class="td">${entry.name}</td>`;
+      const email = `<td class="td">${entry.email}</td>`;
+      const password = `<td class="td">${entry.password}</td>`;
+      const dob = `<td class="td">${entry.dob}</td>`;
+      const accseptConditions = `<td class="td">${entry.accseptConditions}</td>`;
 
-    cell1.innerHTML=name;
-    cell2.innerHTML=email;
-    cell3.innerHTML=password;
-    cell4.innerHTML=dob;
-    cell5.innerHTML=tc;
+      const row = `<tr>${name} ${email} ${password} ${dob} ${accseptConditions}</tr>`;
+      return row;
+    })
+    .join("\n");
 
-    row++;
-    event.preventDefault();
+  let tableDiv = document.getElementById("tableDiv");
+
+  // <th class="th">Name</th> inside oneMore head for name
+  tableDiv.innerHTML = `<table class="table" border="2">
+  <tr>
+    <th class="th">Name</th>
+    <th class="th">Email</th>
+    <th class="th">Password</th>
+    <th class="th">Dob</th>
+    <th class="th">Accepted terms?</th>
+  </tr>
+    ${rows}
+  </table>`;
+};
+
+// const saveUserFrom = () => {
+const saveUserFrom = (event) => {
+  event.preventDefault();
+
+  let name = document.getElementById("name").value;
+  let email = document.getElementById("email").value;
+  let password = document.getElementById("password").value;
+  let dob = document.getElementById("dob").value;
+  let accseptConditions = document.getElementById("agree").checked;
+
+  let entry_obj = {
+    name,
+    email,
+    password,
+    dob,
+    accseptConditions,
+  };
+
+  Entries.push(entry_obj);
+
+  localStorage.setItem("userEntry", JSON.stringify(Entries));
+
+  displayEntries();
+};
+
+form.addEventListener("submit", saveUserFrom);
+
+displayEntries();
+
+// Add additional validations to the date input field so that it accepts date of birth for people between ages 18 and 55 only. You'll need to figure out how to do this.
+
+function getAge(today, birthDate) {
+  // var today = new Date();
+  // var birthDate = new Date(DOB);
+
+  var age = today.getFullYear() - birthDate.getFullYear();
+  var m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+let dateELE = document.getElementById("dob");
+
+dateELE.addEventListener("change", () => {
+  let [year, month, date] = document.getElementById("dob").value.split("-");
+
+  let dob = new Date(year, month, date);
+  let Today = new Date();
+
+  age = getAge(Today, dob);
+
+  dateELE.style.border = "2px solid rgba(0, 0, 0, 0.4)";
+  if (age < 18 || age > 55) {
+    dateELE.setCustomValidity("Your age is not lies between 18 and 55");
+    dateELE.style.border = "2px solid red";
+    return;
+  } else {
+    dateELE.setCustomValidity("");
+  }
+});
+
+const email = document.getElementById("email");
+
+email.addEventListener("input", () => validate(email));
+
+function validate(ele) {
+  if (ele.validity.typeMismatch) {
+    ele.setCustomValidity("The Email is not in the right format!!!");
+    ele.reportValidity();
+  } else {
+    ele.setCustomValidity("");
+  }
 }
